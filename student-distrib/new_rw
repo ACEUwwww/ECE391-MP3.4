@@ -1,0 +1,178 @@
+/*
+
+ *  int32_t read(int32_t offset, void* buf, int32_t n)
+
+ *  DESCRIPTION: call the read function        
+
+ *  INPUTS: int32_t offset  - the index for the file array
+
+ *          void* buf  - the buffer to store the data read
+
+ *          int32_t n - the number of how many bytes need to read
+
+ *  OUTPUTS: read according  to the file
+
+ *  RETURN VALUE: -1 if fail, the corresponding offset if success
+
+ */
+
+ 
+
+int32_t read(uint32_t offset, void* buf, int32_t n){
+
+    /* check if the arguments is valid*/
+
+    int buf_address_start = (int) buf ;
+
+    int buf_address_end = buf_address_start + n;
+
+    int length;
+
+    if(buf_address_start < USER_MEM){  return -1; }
+
+    if(buf_address_end > USER_END){ return -1; } // #define USER_END 0x8400000
+
+    if(offset >= 7 || offset < 0 || offset == 1){ return -1; } // 7 is the size of file array
+
+    if(filed_array[offset].flags == 0){ return -1; }
+
+    /* check if the ptr supports read*/
+
+    int32_t ifread;
+
+    ifread = filed_array[offset].fileot_pointer->read;
+
+    if(ifread == 0){ return -1; } //doesn't support read function
+
+    /* now we can read file by the position into the buf*/
+
+    dentry_t* tem_dentry;
+
+    int32_t tem_inode = filed_array[offset].inode;
+
+    uint8_t *tem_name;
+
+    for(length = 0; length < 63; length ++)
+
+    {
+
+        read_dentry_by_index(length, tem_dentry);
+
+        if (tem_dentry->inode_index == tem_inode)
+
+        {
+
+            tem_name = &tem_dentry->file_name[0];
+
+        }  
+
+    }
+
+    // 63 is the max number of the file list
+
+    return filed_array[offset].fileot_pointer->read(tem_name, filed_array[offset].position, buf, n); // file system here
+
+}
+
+ 
+
+/*
+
+ *  int32_t read(int32_t offset, void* buf, int32_t n)
+
+ *  DESCRIPTION: call the write function        
+
+ *  INPUTS: int32_t offset  - the index for the file array
+
+ *          void* buf  - the buffer to store the data read
+
+ *          int32_t n - the number of how many bytes need to write
+
+ *  OUTPUTS: write according  to the file
+
+ *  RETURN VALUE: -1 if fail, the corresponding offset if success
+
+ */
+
+ 
+
+int32_t write(uint32_t offset, void* buf, int32_t n){
+
+    /* check if the arguments is valid*/
+
+    /* almost same thing as the read function*/
+
+    int length;
+
+    int buf_address_start = (int) buf ;
+
+    int buf_address_end = buf_address_start + n;
+
+    if(buf_address_start < USER_MEM){  return -1; }
+
+    if(buf_address_end > USER_END){ return -1; } // #define USER_END 0x8400000
+    
+    
+
+    if(offset >= 7 || offset < 0 || offset == 0){ return -1; } // 7 is the size of file array
+
+    if(filed_array[offset].flags == 0){ return -1; }
+
+    /* check if the ptr supports write*/
+
+    int32_t ifwrite;
+
+    ifwrite = filed_array[offset].fileot_pointer->write;
+
+    if(ifwrite == 0){ return -1; } //doesn't support write function
+
+    /* now we can read file by the position into the buf*/
+
+    return filed_array[offset].fileot_pointer->write(); // file system here
+
+}
+
+
+int32_t close(int i)
+
+{
+
+    int loop_through_fd;
+
+    int loop_through_dentry;
+
+    dentry_t *current;
+
+    int8_t *filename;
+
+    // check validity
+
+    if(filed_array == NULL) {return -1;}
+
+    for(loop_through_fd = 0; loop_through_fd < FDARRAY_MAX; loop_through_fd++)
+
+    {
+
+        for(loop_through_dentry = 0; loop_through_dentry < 63; loop_through_dentry++)
+
+        {
+
+            read_dentry_by_index(loop_through_dentry, current);
+
+            if (filed_array[loop_through_fd].inode == current->inode_index)
+
+            {
+
+                filename = &current->file_name;
+
+            }
+
+        }
+
+    }
+
+    return filed_array[loop_through_fd].fileot_pointer->close(filename);
+
+}
+
+ 

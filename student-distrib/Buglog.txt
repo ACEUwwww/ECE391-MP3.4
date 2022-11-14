@@ -1,0 +1,75 @@
+YG
+When loading GDT and IDT:
+	Behavior: sometimes it keeps rebooting, sometimes it terminates accidentally.
+	Problem: not using the gdt_desc_ptr correctly.
+	Solved by: edited the gdt_desc_ptr. Though it was still rebooting, but it turned out that it was rtc that was causing rebooting.
+	
+When setting up IDT:
+	Behavior: always can't return the correct description of the exception.
+	Problem: not entering intel reserved exceptions.
+	Solved by: adding them.
+
+When setting up i8259
+	Behavior: itr connected to the slave pic cannot be received
+	Problem: when enabling pins on the slave pic, the second pin on the master pic is not inicialized.
+	Solved by: enable 2nd pin on master slave whenever the slave pic is enabled.
+
+When running in kernel.c
+	Behavior: cannot receive any interrupts.
+	Problem: sti was commented.
+	Solved by: uncomment sti().
+
+When loading value into CR0
+	Behavior: The kernel start to reboot after loading the enable value into CR0
+	Problem: The PD is not correctly loaded
+	Solved by: Reload the PD
+
+When testing margin of page
+	Behavior: The kernel didn't give the right error
+	Problem: Wrongly load IDT exception
+	Solved by: Change the IDT to the correct version.
+	
+When testing keyboard
+	Behavior: The key seems to be wrongly typed
+	Problem: The scancode is wrong
+	Solved by: Change the scancode_map
+
+irq_rtc not modified:
+we forget to modify irq_rtc to 0x28(which is 0x20 + 8), so  we can't receive  our interrupt.
+time taken: 20 min
+
+alogrithm for get frequency is wrong:
+I set the times that rtc_interrupt need to run equal to the frequency, while it should be the frequency of RTC / the frequency set. (flash more frequntly as frequency I set increase, instead of less).
+time taken: 15 min
+
+When testing the vertical scrolling
+	Behavior: The kernel crashed
+	Problem: Segmentation fault
+	Solved by: Edit the keyboard buffer size
+
+When running the kernel with execute
+	Behavior: Crash kernel with segement not present
+	Problem: GDB shows that it terminates at IRET in the context switch in execute syscall
+	Solved by: Changing the IDT[sys_call]'s dpl to 3
+
+When running the kernel with execute
+	Behavior: It reboots in contextswitch
+	Problem: The tssesp0 is not correctly set by printing tssesp0 getting 0
+	Solved by: changging the PCB structure's fdarray struct from fdarray* to fdarray
+
+When running cat 
+	Behavior: file not found
+	Problem: parse argument wrongly
+	Solved by: rewrite parse argument
+
+When running cat
+	Behavior: It prints rapidly without stop 
+	Problem: change the read making it return 0
+	Solved by: change the read making it return 0
+
+When running cat
+	Behavior: It cause the next command page fault
+	Problem: Bootblock has been changed for no reason which cause the next read_dentry page fault
+	Solved by: change the read making it return 0
+
+
